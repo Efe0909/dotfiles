@@ -109,3 +109,12 @@ function y() {
 	fi
 	rm -f -- "$tmp"
 }
+
+function l() {
+    local tmp="$(mktemp -t "lf-cwd.XXXXXX")" cwd
+    lf -last-dir-path="$tmp" "$@"
+    if cwd="$(cat "$tmp")" && [ -n "$cwd" ] && [ "$cwd" != "$PWD" ]; then
+        cd "$cwd"
+    fi
+    rm -f -- "$tmp"
+}
