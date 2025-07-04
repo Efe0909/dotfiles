@@ -30,4 +30,41 @@ git clone --recurse-submodules https://github.com/Efe0909/dotfiles.git ~/dotfile
 ```bash
 chmod +x ~/dotfiles/bootstrap.sh && ~/dotfiles/bootstrap.sh
 ```
+## Using GNU Stow to Manage Dotfiles
 
+If you don't want to use a setup script, you can use [GNU Stow](https://www.gnu.org/software/stow/) to symlink your dotfiles.
+
+### Steps:
+
+1. **Install Stow**  
+   On macOS, you can use Homebrew:
+   ```sh
+   brew install stow
+   ```
+   On Arch,:
+   ```sh
+   sudo pacman -S stow
+   ```
+   On Debian based distros:
+   ```sh
+   sudo apt install stow
+   ```
+
+2. **Clone this repository**  
+   ```sh
+   git clone https://github.com/Efe0909/dotfiles.git ~/dotfiles
+   cd ~/dotfiles
+   ```
+
+3. **Stow a package**  
+   Each directory (like `zsh`, `vim`, etc.) is a “stow package.” To symlink the files for a package into your home directory:
+   ```sh
+   stow zsh
+   stow vim
+   ```
+   Add more as needed or apply everything:
+   ```sh
+   stow .
+   ```
+
+This will symlink the files inside each package directory into your home directory, making setup easy and reversible.
