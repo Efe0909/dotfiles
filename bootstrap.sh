@@ -33,7 +33,7 @@ case "$OS_TYPE" in
     }
     brew update
     brew install \
-      git stow neovim tmux zsh kitty lsof bat thefuck \
+      git stow neovim tmux zsh kitty neofetch lsof bat thefuck \
       fzf ripgrep fd zoxide eza yazi
     brew tap homebrew/cask-fonts
     brew install --cask \
@@ -43,7 +43,7 @@ case "$OS_TYPE" in
   # Arch Linux (pacman + yay)
   arch)
     sudo pacman -Sy --needed \
-      git base-devel stow neovim tmux zsh kitty \
+      git base-devel stow neovim tmux neofetch zsh kitty \
       netcat lsof bat thefuck fzf ripgrep fd zoxide eza
     command -v yay >/dev/null 2>&1 || {
       git clone --depth 1 https://aur.archlinux.org/yay.git /tmp/yay
@@ -58,7 +58,7 @@ case "$OS_TYPE" in
   debian)
     sudo apt update
     sudo apt install -y \
-      git build-essential stow tmux zsh kitty lf \
+      git build-essential stow tmux neofetch zsh kitty lf \
       netcat-openbsd lsof bat thefuck ninja-build \
       gettext cmake unzip curl fzf ripgrep fd-find cargo
 

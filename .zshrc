@@ -8,6 +8,9 @@ fi
 if [[ -f "/opt/homebrew/bin/brew" ]]; then
   # If you're using macOS, you'll want this enabled
   eval "$(/opt/homebrew/bin/brew shellenv)"
+
+  export PATH="/opt/homebrew/bin:$PATH"
+  export PATH="$(brew --prefix python)/libexec/bin:$PATH"
 fi
 
 # Set the directory we want to store zinit and plugins
@@ -102,8 +105,6 @@ eval "$(zoxide init --cmd cd zsh)"
 eval "$(thefuck --alias)"
 
 export EDITOR=nvim
-export PATH="/opt/homebrew/bin:$PATH"
-export PATH="$(brew --prefix python)/libexec/bin:$PATH"
 
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
