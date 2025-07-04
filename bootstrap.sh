@@ -25,7 +25,7 @@ fi
 case "\$OS_TYPE" in
 
   # macOS (Homebrew)
-  mac)
+  "mac")
     command -v brew >/dev/null 2>&1 || {
       /bin/bash -c \
         "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -41,7 +41,7 @@ case "\$OS_TYPE" in
     ;;
 
   # Arch Linux (pacman + yay)
-  arch)
+  "arch")
     sudo pacman -Sy --needed \
       git base-devel stow neovim tmux zsh kitty \
       netcat lsof bat thefuck fzf ripgrep fd zoxide eza
@@ -55,7 +55,7 @@ case "\$OS_TYPE" in
     ;;
 
   # Debian/Ubuntu (apt + source builds)
-  debian)
+  "debian")
     sudo apt update
     sudo apt install -y \
       git build-essential stow tmux zsh kitty lf \
