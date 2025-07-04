@@ -35,7 +35,6 @@ case "$OS_TYPE" in
     brew install \
       git stow neovim tmux zsh kitty neofetch lsof bat thefuck \
       fzf ripgrep fd zoxide eza yazi
-    brew tap homebrew/cask-fonts
     brew install --cask \
       font-jetbrains-mono-nerd-font
     ;;
