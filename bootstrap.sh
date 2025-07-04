@@ -5,15 +5,18 @@ trap 'echo "Error: bootstrap failed at line $LINENO. Fix the issue and run the s
 REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 cd "$REPO_DIR"
 
-# Detect OS type
-if [ "$(uname -s)" = "Darwin" ]; then
+if [[ "$(uname -s)" == "Darwin" ]]; then
   OS_TYPE="mac"
-elif [ -f /etc/arch-release ]; then
+  echo "Detected OS: macOS"
+elif command -v pacman >/dev/null 2>&1; then
   OS_TYPE="arch"
-elif [ -f /etc/debian_version ]; then
+  echo "Detected OS: Arch Linux"
+elif command -v apt >/dev/null 2>&1 || command -v apt-get >/dev/null 2>&1; then
   OS_TYPE="debian"
+  echo "Detected OS: Debian/Ubuntu"
 else
-  OS_TYPE="unknown"
+  echo "Unsupported OS: neither pacman nor apt found" >&2
+  exit 1
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
