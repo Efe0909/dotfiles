@@ -22,10 +22,10 @@ fi
 # ─────────────────────────────────────────────────────────────────────────────
 # Package Installation per-OS
 # ─────────────────────────────────────────────────────────────────────────────
-case "\$OS_TYPE" in
+case "$OS_TYPE" in
 
   # macOS (Homebrew)
-  "mac")
+  mac)
     command -v brew >/dev/null 2>&1 || {
       /bin/bash -c \
         "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
@@ -41,7 +41,7 @@ case "\$OS_TYPE" in
     ;;
 
   # Arch Linux (pacman + yay)
-  "arch")
+  arch)
     sudo pacman -Sy --needed \
       git base-devel stow neovim tmux zsh kitty \
       netcat lsof bat thefuck fzf ripgrep fd zoxide eza
@@ -55,16 +55,16 @@ case "\$OS_TYPE" in
     ;;
 
   # Debian/Ubuntu (apt + source builds)
-  "debian")
+  debian)
     sudo apt update
     sudo apt install -y \
       git build-essential stow tmux zsh kitty lf \
       netcat-openbsd lsof bat thefuck ninja-build \
       gettext cmake unzip curl fzf ripgrep fd-find cargo
 
-    mkdir -p "\$HOME/.local/bin"
-    [ -e "\$HOME/.local/bin/fd" ] || \
-      ln -s "$(command -v fdfind)" "\$HOME/.local/bin/fd"
+    mkdir -p "$HOME/.local/bin"
+    [ -e "$HOME/.local/bin/fd" ] || \
+      ln -s "$(command -v fdfind)" "$HOME/.local/bin/fd"
 
     # Neovim nightly build
     if dpkg -s neovim >/dev/null 2>&1; then
@@ -73,23 +73,23 @@ case "\$OS_TYPE" in
     if ! command -v nvim >/dev/null 2>&1; then
       tmp=$(mktemp -d)
       git clone  --depth 1\
-        https://github.com/neovim/neovim.git "\$tmp/neovim"
-      (cd "\$tmp/neovim" && \
+        https://github.com/neovim/neovim.git "$tmp/neovim"
+      (cd "$tmp/neovim" && \
         make CMAKE_BUILD_TYPE=RelWithDebInfo && \
         sudo make install)
-      rm -rf "\$tmp"
+      rm -rf "$tmp"
     fi
 
     # Fonts installation
-    mkdir -p "\$HOME/.local/share/fonts"
+    mkdir -p "$HOME/.local/share/fonts"
     font_url=$(curl -sI \
       https://github.com/ryanoasis/nerd-fonts/\
 releases/latest/download/JetBrainsMono.zip \
-      | awk '/^location:/ {print \$2}' | tr -d '\r')
+      | awk '/^location:/ {print $2}' | tr -d '\r')
     tmpf=$(mktemp)
-    curl -L -o "\$tmpf" "\$font_url"
-    unzip -o "\$tmpf" -d "\$HOME/.local/share/fonts"
-    rm "\$tmpf"
+    curl -L -o "$tmpf" "$font_url"
+    unzip -o "$tmpf" -d "$HOME/.local/share/fonts"
+    rm "$tmpf"
     command -v fc-cache >/dev/null 2>&1 && \
       fc-cache -fv
 
@@ -129,11 +129,11 @@ esac
 git submodule update --init --recursive
 
 # Backup existing ~/.zshrc
-if [ -e "\$HOME/.zshrc" ] && [ ! -L "\$HOME/.zshrc" ]; then
+if [ -e "$HOME/.zshrc" ] && [ ! -L "$HOME/.zshrc" ]; then
   read -r -p \
     "Found existing ~/.zshrc. Move to ~/.zshrc.bak? [y/N] " ans
-  case "\$ans" in
-    [Yy]*) mv "\$HOME/.zshrc" "\$HOME/.zshrc.bak" ;;  
+  case "$ans" in
+    [Yy]*) mv "$HOME/.zshrc" "$HOME/.zshrc.bak" ;;  
   esac
 fi
 
@@ -143,10 +143,10 @@ stow .
 # ─────────────────────────────────────────────────────────────────────────────
 # Shell Change and TMUX Plugin Setup
 # ─────────────────────────────────────────────────────────────────────────────
-if [ "\$SHELL" != "$(command -v zsh)" ]; then
+if [ "$SHELL" != "$(command -v zsh)" ]; then
   read -r -p \
     "Switch your default shell to Zsh? [Y/n] " ans
-  case "\$ans" in
+  case "$ans" in
     [Nn]*) echo \
       "Skipping shell switch. To change later: chsh -s $(command -v zsh)" ;;
     *)
@@ -157,13 +157,13 @@ if [ "\$SHELL" != "$(command -v zsh)" ]; then
 fi
 
 # TPM bootstrap
-if [ ! -d "\$HOME/.config/tmux/plugins/tpm" ]; then
+if [ ! -d "$HOME/.config/tmux/plugins/tpm" ]; then
   git clone  --depth 1\
     https://github.com/tmux-plugins/tpm \
-    "\$HOME/.config/tmux/plugins/tpm"
+    "$HOME/.config/tmux/plugins/tpm"
 fi
-[ -x "\$HOME/.config/tmux/plugins/tpm/bin/install_plugins" ] && \
-  "\$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
+[ -x "$HOME/.config/tmux/plugins/tpm/bin/install_plugins" ] && \
+  "$HOME/.config/tmux/plugins/tpm/bin/install_plugins"
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Neovim Plugin Sync
@@ -174,10 +174,10 @@ command -v nvim >/dev/null 2>&1 && \
 # ─────────────────────────────────────────────────────────────────────────────
 # Debian-only: Prompt and auto-install missing tools
 # ─────────────────────────────────────────────────────────────────────────────
-if [ "\$OS_TYPE" = "debian" ]; then
+if [ "$OS_TYPE" = "debian" ]; then
   read -r -p \
     "Install missing Debian-only tools via cargo? [Y/n] " ans
-  if [[ ! \$ans =~ ^[Nn] ]]; then
+  if [[ ! $ans =~ ^[Nn] ]]; then
     echo "Installing missing tools via cargo..."
     cargo install eza yazi zoxide lf
   fi
