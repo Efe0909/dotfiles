@@ -8,9 +8,9 @@ cd "$REPO_DIR"
 # Detect OS type
 if [ "$(uname -s)" = "Darwin" ]; then
   OS_TYPE="mac"
-elif command -v pacman >/dev/null 2>&1; then
+elif [ -f /etc/arch-release ]; then
   OS_TYPE="arch"
-elif command -v apt >/dev/null 2>&1; then
+elif [ -f /etc/debian_version ]; then
   OS_TYPE="debian"
 else
   OS_TYPE="unknown"
