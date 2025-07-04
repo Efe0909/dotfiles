@@ -175,15 +175,15 @@ command -v nvim >/dev/null 2>&1 && \
 # Debian-only: Prompt and auto-install missing tools
 # ─────────────────────────────────────────────────────────────────────────────
 if [ "$OS_TYPE" = "debian" ]; then
-  read -r -p \
-    "Install missing Debian-only tools via cargo? [Y/n] " ans
-  if [[ ! $ans =~ ^[Nn] ]]; then
-    echo "Installing missing tools via cargo..."
-    cargo install eza yazi zoxide lf
-  fi
+  echo "(Optional) Install missing Debian-only tools via cargo later [C]ontinue:"
+  echo "Install with: [cargo install eza yazi zoxide]"
 fi
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Hand off to Zsh
 # ─────────────────────────────────────────────────────────────────────────────
-exec zsh
+read -r -p "Start a Zsh session now? [Y/n] " ans
+ans=${ans:-Y}
+if [[ $ans =~ ^[Yy] ]]; then
+  exec zsh
+fi
