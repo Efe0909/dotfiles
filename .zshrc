@@ -55,7 +55,7 @@ else
 fi
 
 # Keybindings
-bindkey -e
+bindkey -v
 bindkey '^p' history-search-backward
 bindkey '^n' history-search-forward
 bindkey '^[w' kill-region
@@ -84,10 +84,14 @@ zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 alias ls='ls --color'
 alias vim='nvim'
 alias c='clear'
+
 # --- exa aliases ----------------------------------------------------
-alias ls='eza -a --icons'
-alias ll='eza -lbhHigUmuax --git --time-style=long-iso --icons'
-alias la='eza -lah --git --group-directories-first --icons'
+if (( $+commands[eza] )); then
+  alias ls='eza -a --icons --group-directories-first'
+  alias ll='eza -lbhHigUmuax --git --time-style=long-iso --icons'
+  alias la='eza -lah --git --group-directories-first --icons'
+fi
+
 
 # Keep muscle-memory: call `exa` → `eza`
 alias exa='eza'

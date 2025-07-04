@@ -23,7 +23,7 @@ One `bootstrap.sh` gets you a fully working environment—editor, shell, termina
 
 #### Clone command
 ```bash
-git clone --recurse-submodules https://github.com/you/dotfiles.git ~/dotfiles
+git clone --recurse-submodules https://github.com/Efe0909/dotfiles.git ~/dotfiles
 ```
 
 #### Bootstrap script (recomended for new systems)
