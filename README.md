@@ -59,8 +59,8 @@ If you don't want to use a setup script, you can use [GNU Stow](https://www.gnu.
 3. **Stow a package**  
    Each directory (like `zsh`, `vim`, etc.) is a “stow package.” To symlink the files for a package into your home directory:
    ```sh
-   stow zsh
-   stow vim
+   stow .config
+   stow .zshrc
    ```
    Add more as needed or apply everything:
    ```sh
