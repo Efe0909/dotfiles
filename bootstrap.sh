@@ -19,72 +19,67 @@ else
   exit 1
 fi
 
-################################################################################
-# Backup / Revert logic (respects .stowrc & friends)
-#
-#  • Normal run   : ./bootstrap.sh
-#  • Roll-back    : ./bootstrap.sh revert
-################################################################################
+###############################################################################
+# Backup / Revert logic
+###############################################################################
 
 backup_manifest="$REPO_DIR/.bootstrap.baklist"
 
-# ── REVERT MODE ───────────────────────────────────────────────────────────────
+# — REVERT — ---------------------------------------------------------------
 if [[ ${1-} == revert ]]; then
   if [[ -f $backup_manifest ]]; then
-    echo "Reverting backups listed in $backup_manifest…"
-    while IFS= read -r line; do
-      orig=${line%% *}  bak=${line##* }
-      if [[ -e $bak && ! -e $orig ]]; then
-        mv "$bak" "$orig"
-        echo "  Restored $orig"
-      fi
+    echo "Reverting backups…"
+    while IFS=' ' read -r orig bak; do
+      [[ -e $bak && ! -e $orig ]] && mv "$bak" "$orig" && echo "  Restored $orig"
     done <"$backup_manifest"
     rm -f "$backup_manifest"
-    echo "Done. Original dotfiles reinstated."
+    echo "Done."
   else
-    echo "No backup manifest found – nothing to revert."
+    echo "No backup manifest found — nothing to revert."
   fi
   exit 0
 fi
+> "$backup_manifest"   # fresh manifest
 
-> "$backup_manifest"  # fresh manifest for this run
+# — Gather Stow “packages” --------------------------------------------------
+stow_pkgs=$( cd "$REPO_DIR" &&
+  find . -maxdepth 1 -type d ! -name . ! -name .git -printf '%P\n' 2>/dev/null ||
+  find . -maxdepth 1 -type d ! -name . ! -name .git | cut -c3- )
 
-# ── discover Stow “packages” ──────────────────────────────────────────────────
-mapfile -t stow_pkgs < <(
-  find . -maxdepth 1 -type d ! -name '.git' ! -name '.' -printf '%P\n'
-)
-if [[ -d .config ]]; then
-  while IFS= read -r sub; do stow_pkgs+=(".config/$sub"); done \
-      < <(find .config -mindepth 1 -maxdepth 1 -type d -printf '%P\n')
+if [[ -d "$REPO_DIR/.config" ]]; then
+  stow_pkgs="$stow_pkgs
+$( cd "$REPO_DIR/.config" && find . -maxdepth 1 -mindepth 1 -type d | cut -c3- )"
 fi
 
-echo "Scanning existing dotfiles (honouring .stowrc ignores)…"
+echo "Scanning existing dotfiles (honouring Stow ignores)…"
 
-for pkg in "${stow_pkgs[@]}"; do
-  # Ask Stow (dry-run) what links it would create for this package
-  mapfile -t files_to_link < <(
-      stow -nv --dir="$REPO_DIR" --target="$HOME" "$pkg" 2>&1 |
-      awk '$1 == "LINK:" {print $2}' | sed 's|^\./||'
-  )
+# — For each package, stream Stow’s dry-run output line-by-line ------------
+while IFS= read -r pkg; do
+  [[ -z $pkg ]] && continue
+  stow -nv --dir="$REPO_DIR" --target="$HOME" "$pkg" 2>&1 || true
+  while IFS= read -r line; do
+    [[ $line != LINK:* ]] && continue
+    rel=${line#LINK: }
+    rel=${rel#./}
+    tgt="$HOME/$rel"
 
-  # Offer a backup for each real, non-symlink file that would be replaced
-  for relpath in "${files_to_link[@]}"; do
-    home_target="$HOME/$relpath"
-    if [[ -e $home_target && ! -L $home_target ]]; then
-      read -r -p "⮑  Save existing $relpath to .bak? [y/N] " ans
+    if [[ -e $tgt && ! -L $tgt ]]; then
+      printf "⮑  Save existing %s to .bak? [y/N] " "$rel"
+      read -r ans
       if [[ $ans =~ ^[Yy]$ ]]; then
-        bak="${home_target}.bak-$(date +%s)"
-        mv "$home_target" "$bak"
-        echo "$home_target $bak" >>"$backup_manifest"
-        echo "    → moved to $bak"
+        bak="${tgt}.bak-$(date +%s)"
+        mv "$tgt" "$bak"
+        printf "%s %s\n" "$tgt" "$bak" >>"$backup_manifest"
+        printf "    → moved to %s\n" "$bak"
       else
-        echo "    × skipped – original file will be shadowed by symlink."
+        printf "    × skipped – Stow will report a conflict and keep your original.\n"
       fi
     fi
   done
-done
+done <<<"$stow_pkgs"
 
 echo "Backup checks complete. Continuing with Stow…"
+
 # ─────────────────────────────────────────────────────────────────────────────
 # Package Installation per-OS
 # ─────────────────────────────────────────────────────────────────────────────
