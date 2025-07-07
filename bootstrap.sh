@@ -19,6 +19,72 @@ else
   exit 1
 fi
 
+################################################################################
+# Backup / Revert logic (respects .stowrc & friends)
+#
+#  • Normal run   : ./bootstrap.sh
+#  • Roll-back    : ./bootstrap.sh revert
+################################################################################
+
+backup_manifest="$REPO_DIR/.bootstrap.baklist"
+
+# ── REVERT MODE ───────────────────────────────────────────────────────────────
+if [[ ${1-} == revert ]]; then
+  if [[ -f $backup_manifest ]]; then
+    echo "Reverting backups listed in $backup_manifest…"
+    while IFS= read -r line; do
+      orig=${line%% *}  bak=${line##* }
+      if [[ -e $bak && ! -e $orig ]]; then
+        mv "$bak" "$orig"
+        echo "  Restored $orig"
+      fi
+    done <"$backup_manifest"
+    rm -f "$backup_manifest"
+    echo "Done. Original dotfiles reinstated."
+  else
+    echo "No backup manifest found – nothing to revert."
+  fi
+  exit 0
+fi
+
+> "$backup_manifest"  # fresh manifest for this run
+
+# ── discover Stow “packages” ──────────────────────────────────────────────────
+mapfile -t stow_pkgs < <(
+  find . -maxdepth 1 -type d ! -name '.git' ! -name '.' -printf '%P\n'
+)
+if [[ -d .config ]]; then
+  while IFS= read -r sub; do stow_pkgs+=(".config/$sub"); done \
+      < <(find .config -mindepth 1 -maxdepth 1 -type d -printf '%P\n')
+fi
+
+echo "Scanning existing dotfiles (honouring .stowrc ignores)…"
+
+for pkg in "${stow_pkgs[@]}"; do
+  # Ask Stow (dry-run) what links it would create for this package
+  mapfile -t files_to_link < <(
+      stow -nv --dir="$REPO_DIR" --target="$HOME" "$pkg" 2>&1 |
+      awk '$1 == "LINK:" {print $2}' | sed 's|^\./||'
+  )
+
+  # Offer a backup for each real, non-symlink file that would be replaced
+  for relpath in "${files_to_link[@]}"; do
+    home_target="$HOME/$relpath"
+    if [[ -e $home_target && ! -L $home_target ]]; then
+      read -r -p "⮑  Save existing $relpath to .bak? [y/N] " ans
+      if [[ $ans =~ ^[Yy]$ ]]; then
+        bak="${home_target}.bak-$(date +%s)"
+        mv "$home_target" "$bak"
+        echo "$home_target $bak" >>"$backup_manifest"
+        echo "    → moved to $bak"
+      else
+        echo "    × skipped – original file will be shadowed by symlink."
+      fi
+    fi
+  done
+done
+
+echo "Backup checks complete. Continuing with Stow…"
 # ─────────────────────────────────────────────────────────────────────────────
 # Package Installation per-OS
 # ─────────────────────────────────────────────────────────────────────────────
