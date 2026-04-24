@@ -10,7 +10,9 @@ if [[ -f "/opt/homebrew/bin/brew" ]]; then
   eval "$(/opt/homebrew/bin/brew shellenv)"
 
   export PATH="/opt/homebrew/bin:$PATH"
+  export PATH="$HOME/.local/bin:$PATH"
   export PATH="$(brew --prefix python)/libexec/bin:$PATH"
+  export JAVA_HOME=$(/usr/libexec/java_home -v 24)
 fi
 
 # Set the directory we want to store zinit and plugins
@@ -84,15 +86,15 @@ zstyle ':fzf-tab:complete:cd:*' fzf-preview 'ls --color $realpath'
 zstyle ':fzf-tab:complete:__zoxide_z:*' fzf-preview 'ls --color $realpath'
 
 # Aliases
-alias ls='ls --color'
 alias vim='nvim'
+alias vimm='\vim'
 alias c='clear'
 
 # --- exa aliases ----------------------------------------------------
 if (( $+commands[eza] )); then
-  alias ls='eza -a --icons --group-directories-first'
-  alias ll='eza -lbhHigUmuax --git --time-style=long-iso --icons'
-  alias la='eza -lah --git --group-directories-first --icons'
+  alias ls='eza -a --icons --group-directories-first --color=always'
+  alias ll='eza -lh --icons --group-directories-first --color=always'
+  alias la='eza -lah --icons --group-directories-first --color=always'
 fi
 
 
@@ -100,11 +102,13 @@ fi
 alias exa='eza'
 
 # Shell integrations
+# eval "$(tirith init --shell zsh)"
 eval "$(fzf --zsh)"
 eval "$(zoxide init --cmd cd zsh)"
 eval "$(thefuck --alias)"
 
 export EDITOR=nvim
+export PATH="$HOME/.cargo/bin:$PATH"
 
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
@@ -123,3 +127,11 @@ function l() {
     fi
     rm -f -- "$tmp"
 }
+
+# Created by `pipx` on 2025-11-03 02:42:22
+export PATH="$PATH:/Users/Efe/.local/bin"
+
+# Added by Antigravity
+export PATH="/Users/Efe/.antigravity/antigravity/bin:$PATH"
+export IDF_TOOLS_PATH=/opt/espressif/env
+alias get_idf='source /opt/espressif/sdk/export.sh'

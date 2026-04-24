@@ -3,6 +3,14 @@
 set -euo pipefail
 trap 'status=$?; echo "Error: bootstrap failed with $status at line $LINENO" >&2; exit $status' ERR
 
+test() {
+  REPO_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+  BACKUP_MANIFEST="$REPO_DIR/.bootstrap.backlist"
+
+  cd "$REPO_DIR"
+  
+  findStowPackages
+}
 ###############################################################################
 # Main
 ###############################################################################
@@ -92,17 +100,71 @@ detectOs() {
   echo "Unsupported OS: neither pacman nor apt found" >&2
 }
 
+###############################################################################
+# findStowPackages
+#   Globals filled:
+#     STOW_PACKAGES   → dot-* items in repo root
+#     STOW_LINKS_EXIST
+#     STOW_LINKS_NEW
+#     STOW_CONFLICTS
+###############################################################################
+findStowPackages() {
+  # init globals
+  STOW_PACKAGES=()
+  STOW_LINKS_EXIST=()
+  STOW_LINKS_NEW=()
+  STOW_CONFLICTS=() 
 
-###############################################################################
-# findStowPackages() determine existing config files that can overlap with stow
-###############################################################################
-function findStowPackages() {
-    
+  # ── discover packages (dirs *or* files) ────────────────────────────────────
+  for item in dot-*; do
+    [[ -e $item ]] && STOW_PACKAGES+=("$item")
+  done
+
+  if ((${#STOW_PACKAGES[@]} == 0)); then
+    echo "No dot-* packages found – nothing to stow."
+    return
+  fi
+
+  # ── dry-run each package & classify links ─────────────────────────────────
+  for pkg in "${STOW_PACKAGES[@]}"; do
+    stow -nv "$pkg" 2>&1 || true |           # keep going even on conflicts
+    while IFS= read -r line; do
+      [[ $line == LINK:* ]] || continue
+
+      # take first token after 'LINK:'  (works for '->' or '=>')
+      rel=${line#LINK: }
+      rel=${rel%%[[:space:]]*}
+      rel=${rel#./}                          # drop leading "./" if present
+      dest="$HOME/$rel"
+
+      if [[ -L $dest ]]; then
+        STOW_LINKS_EXIST+=("$rel")
+      else
+        if [[ -e $dest ]]; then
+          STOW_CONFLICTS+=("$dest")
+        fi
+        STOW_LINKS_NEW+=("$rel")
+      fi
+    done
+  done
+
+  # ── summary ───────────────────────────────────────────────────────────────
+  echo
+  echo "Existing links (${#STOW_LINKS_EXIST[@]}):"
+  ((${#STOW_LINKS_EXIST[@]})) && printf '  %s\n' "${STOW_LINKS_EXIST[@]}" || echo "  (none)"
+
+  echo
+  echo "To be created (${#STOW_LINKS_NEW[@]}):"
+  ((${#STOW_LINKS_NEW[@]})) && printf '  %s\n' "${STOW_LINKS_NEW[@]}" || echo "  (none)"
+
+  echo
+  echo "Conflicts (${#STOW_CONFLICTS[@]}):"
+  ((${#STOW_CONFLICTS[@]})) && printf '  %s\n' "${STOW_CONFLICTS[@]}" || echo "  (none)"
+  echo
 }
-
-
 
 # ────────────────────────────────────────────────────────────────────────────
 # Main entry point
 # ────────────────────────────────────────────────────────────────────────────
-main "$@"
+# main "$@"
+test
