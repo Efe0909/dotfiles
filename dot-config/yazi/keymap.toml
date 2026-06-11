@@ -1,44 +1,49 @@
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["o"]
 run = "open --with browse"
 desc = "Open in browser"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["z", "x"]
 run = "shell 'cd \"$(dirname \"$1\")\" && name=$(basename \"$1\"); name=\"${name%%.*}\"; mkdir -p \"$name\"; case \"$1\" in *.tar.*|*.tgz) tar xf \"$1\" -C \"$name\" ;; *) 7z x \"$1\" -o\"$name\" ;; esac' --block --confirm"
 desc = "Extract archive"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["z", "z"]
 run = "shell 'cd \"$(dirname \"$1\")\" && printf \"Archive name [archive]: \"; read name; name=${name:-archive}; zip -r \"${name%.zip}.zip\" \"${@##*/}\"' --block --confirm"
 desc = "Compress to zip"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["z", "t"]
 run = "shell 'cd \"$(dirname \"$1\")\" && printf \"Archive name [archive]: \"; read name; name=${name:-archive}; tar -czf \"${name%.tar.gz}.tar.gz\" \"${@##*/}\"' --block --confirm"
 desc = "Compress to tar.gz"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["z", "7"]
 run = "shell 'cd \"$(dirname \"$1\")\" && printf \"Archive name [archive]: \"; read name; name=${name:-archive}; 7z a \"${name%.7z}.7z\" \"${@##*/}\"' --block --confirm"
 desc = "Compress to 7z"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["r", "a"]
 run = "shell 'printf \"%s\\n\" \"$@\" >> /tmp/yazi_rsync_stage; echo \"Staged $# item(s). Total in stage: $(wc -l < /tmp/yazi_rsync_stage | tr -d \" \")\"' --block"
 desc = "Stage for rsync"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["r", "r"]
 run = "shell 'tmux popup -w 80% -h 80% -E \"~/.config/yazi/scripts/rsync_here.sh \\\"$PWD\\\"\"' --confirm"
 desc = "Rsync staged to here"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
 on = ["r", "c"]
 run = "shell 'rm -f /tmp/yazi_rsync_stage && echo \"Stage cleared\"' --block"
 desc = "Clear rsync stage"
 
-[[manager.prepend_keymap]]
+[[mgr.prepend_keymap]]
+on = ["r", "f"]
+run = "rename"
+desc = "Rename file"
+
+[[mgr.prepend_keymap]]
 on = ["c", "p"]
 run = "shell 'printf \"Output filename [merged]: \"; read name; name=${name:-merged}; pdfunite \"$@\" \"$(dirname \"$1\")/${name%.pdf}.pdf\"' --block --confirm"
 desc = "Concat PDFs with custom name"

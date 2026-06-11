@@ -92,7 +92,7 @@ alias c='clear'
 
 # --- exa aliases ----------------------------------------------------
 if (( $+commands[eza] )); then
-  alias ls='eza -a --icons --group-directories-first --color=always'
+  alias ls='eza -a --icons --group-directories-first --color=always --sort=extension'
   alias ll='eza -lh --icons --group-directories-first --color=always'
   alias la='eza -lah --icons --group-directories-first --color=always'
 fi
@@ -102,9 +102,8 @@ fi
 alias exa='eza'
 
 # Shell integrations
-# eval "$(tirith init --shell zsh)"
+eval "$(tirith init)"
 eval "$(fzf --zsh)"
-eval "$(zoxide init --cmd cd zsh)"
 eval "$(thefuck --alias)"
 
 export EDITOR=nvim
@@ -133,5 +132,8 @@ export PATH="$PATH:/Users/Efe/.local/bin"
 
 # Added by Antigravity
 export PATH="/Users/Efe/.antigravity/antigravity/bin:$PATH"
+
+# esppressif sdk toolchain
 export IDF_TOOLS_PATH=/opt/espressif/env
-alias get_idf='source /opt/espressif/sdk/export.sh'
+
+eval "$(zoxide init --cmd cd zsh)"
