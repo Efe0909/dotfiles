@@ -5,15 +5,27 @@ if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-if [[ -f "/opt/homebrew/bin/brew" ]]; then
-  # If you're using macOS, you'll want this enabled
-  eval "$(/opt/homebrew/bin/brew shellenv)"
+# Dedupe PATH automatically, keeping the first occurrence. Installers (pipx,
+# rustup via .zshenv, Antigravity) all append blindly; this absorbs that instead
+# of us hand-pruning their lines every time.
+typeset -U path PATH
 
-  export PATH="/opt/homebrew/bin:$PATH"
-  export PATH="$HOME/.local/bin:$PATH"
-  export PATH="$(brew --prefix python)/libexec/bin:$PATH"
-  export JAVA_HOME=$(/usr/libexec/java_home -v 24)
+# --- macOS-only -----------------------------------------------------
+# Guarded by uname: java_home and /opt/homebrew don't exist on Linux.
+if [[ "$(uname -s)" == "Darwin" ]]; then
+  if [[ -f "/opt/homebrew/bin/brew" ]]; then
+    # shellenv already puts /opt/homebrew/{bin,sbin} on PATH -- don't re-add it.
+    eval "$(/opt/homebrew/bin/brew shellenv)"
+    export PATH="$(brew --prefix python)/libexec/bin:$PATH"
+  fi
+  export JAVA_HOME=$(/usr/libexec/java_home -v 24 2>/dev/null)
 fi
+
+# --- Cross-platform PATH --------------------------------------------
+# $HOME, not /Users/Efe: pipx and the Antigravity installer both hardcoded
+# the macOS path, which is a dead entry on Linux.
+export PATH="$HOME/.local/bin:$PATH"
+export PATH="$HOME/.cargo/bin:$PATH"
 
 # Set the directory we want to store zinit and plugins
 ZINIT_HOME="${XDG_DATA_HOME:-${HOME}/.local/share}/zinit/zinit.git"
@@ -102,12 +114,16 @@ fi
 alias exa='eza'
 
 # Shell integrations
-eval "$(tirith init)"
-eval "$(fzf --zsh)"
-eval "$(thefuck --alias)"
+# Guarded: debian's fzf is old enough to lack --zsh, and thefuck isn't packaged
+# there at all -- unguarded, both spew errors on every shell start.
+if (( $+commands[fzf] )); then
+  eval "$(fzf --zsh 2>/dev/null)"
+fi
+if (( $+commands[thefuck] )); then
+  eval "$(thefuck --alias)"
+fi
 
 export EDITOR=nvim
-export PATH="$HOME/.cargo/bin:$PATH"
 
 function y() {
 	local tmp="$(mktemp -t "yazi-cwd.XXXXXX")" cwd
@@ -127,13 +143,12 @@ function l() {
     rm -f -- "$tmp"
 }
 
-# Created by `pipx` on 2025-11-03 02:42:22
-export PATH="$PATH:/Users/Efe/.local/bin"
-
-# Added by Antigravity
-export PATH="/Users/Efe/.antigravity/antigravity/bin:$PATH"
+[ -f ~/.secrets ] && source ~/.secrets
 
 # esppressif sdk toolchain
 export IDF_TOOLS_PATH=/opt/espressif/env
 
-eval "$(zoxide init --cmd cd zsh)"
+# Guarded for debian boxes without zoxide, where an unguarded init would error.
+if (( $+commands[zoxide] )); then
+  eval "$(zoxide init --cmd cd zsh)"
+fi
