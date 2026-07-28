@@ -143,6 +143,48 @@ function l() {
     rm -f -- "$tmp"
 }
 
+# caff — inspect/clean up caffeinate processes.
+#   caff            list running caffeinate processes with age
+#   caff kill       kill all of them
+#   caff kill <pid> kill one
+# Clears the caffeinate-watch alert lockfiles too, so the prompt icon drops on
+# the next render instead of waiting for the next cron pass.
+caff() {
+  local dir=${XDG_DATA_HOME:-$HOME/.local/share}/caffeinate
+  case ${1:-list} in
+    kill)
+      local -a pids
+      if [ -n "${2:-}" ]; then pids=($2); else pids=(${(f)"$(pgrep -x caffeinate)"}); fi
+      if (( ! $#pids )); then print "no caffeinate processes"; return 1; fi
+      print "killing: $pids"
+      kill $pids 2>/dev/null
+      if [ -n "${2:-}" ]; then rm -f "$dir/$2"; else rm -f $dir/[0-9]*(N); fi
+      ;;
+    list|*)
+      if ! pgrep -x caffeinate >/dev/null; then print "no caffeinate processes"; return; fi
+      ps -Ao pid,etime,command | awk 'NR==1 || $3=="caffeinate" || $3 ~ /\/caffeinate$/'
+      ;;
+  esac
+}
+
+# Run caffeinate-watch from the prompt instead of cron: cron only fires when the
+# mac happens to be awake, but this fires whenever you have a shell open. Throttled
+# to once per interval and backgrounded, so the prompt itself never waits on ps.
+zmodload zsh/datetime 2>/dev/null   # EPOCHSECONDS
+zmodload zsh/stat 2>/dev/null       # zstat
+_caffeinate_watch_precmd() {
+  (( $+commands[caffeinate-watch] )) || return
+  local stamp=${XDG_DATA_HOME:-$HOME/.local/share}/caffeinate/.last
+  local -i last=0 now=$EPOCHSECONDS
+  zstat -A last +mtime -- $stamp 2>/dev/null
+  (( now - last >= ${CAFFEINATE_WATCH_INTERVAL:-1800} )) || return
+  mkdir -p ${stamp:h}
+  : >| $stamp                    # stamp before spawning so parallel shells don't pile on
+  ( caffeinate-watch &>/dev/null & ) &>/dev/null
+}
+autoload -Uz add-zsh-hook
+add-zsh-hook precmd _caffeinate_watch_precmd
+
 [ -f ~/.secrets ] && source ~/.secrets
 
 # esppressif sdk toolchain
